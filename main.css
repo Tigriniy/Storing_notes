@@ -32,3 +32,20 @@ h1 {
     border-radius: 5px;
 
 }
+
+.add-btn {
+    width: 100%;
+    padding: 10px;
+    background-color: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-size: 14px;
+ }
+
+.add-btn:hover {
+    background-color: #45a049;
+}
+
