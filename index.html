@@ -15,6 +15,12 @@
             <div class="cards">
                 <div v-for="card in column1" :key="card.id" class="card">
                     <h3>{{ card.title }}</h3>
+                    <ul class="card-list">
+                        <li v-for="(item, index) in card.items" :key="index">
+                            <input type="checkbox" v-model="item.completed">
+                            <span>{{ item.text }}</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
             <button class="add-btn" @click="openModal('column1')"
@@ -27,6 +33,12 @@
             <div class="cards">
                 <div v-for="card in column2" :key="card.id" class="card">
                     <h3>{{ card.title }}</h3>
+                    <ul class="card-list">
+                        <li v-for="(item, index) in card.items" :key="index">
+                            <input type="checkbox" v-model="item.completed">
+                            <span>{{ item.text }}</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
             <button class="add-btn" @click="openModal('column2')"
@@ -39,24 +51,51 @@
             <div class="cards">
                 <div v-for="card in column3" :key="card.id" class="card">
                     <h3>{{ card.title }}</h3>
+                    <ul class="card-list">
+                        <li v-for="(item, index) in card.items" :key="index">
+                            <input type="checkbox" v-model="item.completed">
+                            <span>{{ item.text }}</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
     </div>
 
-
     <div class="modal" v-show="showModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Новая карточка</h3>
+                <h3>{{ editingCard ? 'Редактировать карточку' : 'Новая карточка' }}</h3>
                 <button class="close-btn" @click="closeModal">&times;</button>
             </div>
             <div class="modal-body">
-                <label>Заголовок:</label>
-                <input type="text" v-model="newCardTitle" required>
+                <div class="form-group">
+                    <label>Заголовок:</label>
+                    <input type="text" v-model="newCardTitle" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Пункты списка (3-5 пунктов):</label>
+                    <div class="items-container">
+                        <div v-for="(item, index) in newCardItems" :key="index" class="item-row">
+                            <input type="text" v-model="newCardItems[index]"
+                                   placeholder="Введите пункт списка" required>
+                            <button type="button" class="btn-remove"
+                                    @click="removeItem(index)"
+                                    :disabled="newCardItems.length <= 3">
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add-item"
+                            @click="addItem"
+                            :disabled="newCardItems.length >= 5">
+                        + Добавить пункт
+                    </button>
+                </div>
             </div>
             <div class="modal-footer">
-                <button @click="addCard">Добавить карточку</button>
+                <button @click="saveCard">{{ editingCard ? 'Сохранить' : 'Добавить карточку' }}</button>
                 <button @click="closeModal">Отмена</button>
             </div>
         </div>
