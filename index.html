@@ -1,43 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Система заметок</title>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <div id="app">
-        <h1>Система заметок</h1>
+<div id="app">
+    <h1>Система заметок</h1>
 
-        <div class="columns">
-            <div class="column">
-                <h2>Столбец 1</h2>
-                <button class="add-btn">Добавить</button>
+    <div class="columns">
+        <div class="column">
+            <h2>Столбец 1 (макс. 3)</h2>
+            <div class="cards">
+                <div v-for="card in column1" :key="card.id" class="card">
+                    <h3>{{ card.title }}</h3>
+                </div>
             </div>
-            <div class="column">
-                <h2>Столбец 2</h2>
-                <button class="add-btn">Добавить</button>
+            <button class="add-btn" @click="openModal('column1')"
+                    :disabled="column1.length >= 3">
+                Добавить
+            </button>
+        </div>
+        <div class="column">
+            <h2>Столбец 2 (макс. 5)</h2>
+            <div class="cards">
+                <div v-for="card in column2" :key="card.id" class="card">
+                    <h3>{{ card.title }}</h3>
+                </div>
             </div>
-            <div class="column">
-                <h2>Столбец 3</h2>
-                <button class="add-btn">Добавить</button>
+            <button class="add-btn" @click="openModal('column2')"
+                    :disabled="column2.length >= 5">
+                Добавить
+            </button>
+        </div>
+        <div class="column">
+            <h2>Столбец 3</h2>
+            <div class="cards">
+                <div v-for="card in column3" :key="card.id" class="card">
+                    <h3>{{ card.title }}</h3>
+                </div>
             </div>
         </div>
     </div>
 
-    <script src="vue.min.js"></script>
 
-    <div id="modal" class="modal" style="display: none;">
+    <div class="modal" v-show="showModal">
         <div class="modal-content">
-            <div class="modal=header">
+            <div class="modal-header">
                 <h3>Новая карточка</h3>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <button class="close-btn" @click="closeModal">&times;</button>
             </div>
-            <div>
-                <label>Заголовок</label>
-                <input type="text" id="cardTitle">
+            <div class="modal-body">
+                <label>Заголовок:</label>
+                <input type="text" v-model="newCardTitle" required>
+            </div>
+            <div class="modal-footer">
+                <button @click="addCard">Добавить карточку</button>
+                <button @click="closeModal">Отмена</button>
             </div>
         </div>
     </div>
+</div>
+
+<script src="vue.min.js"></script>
+<script src="main.js"></script>
 </body>
 </html>

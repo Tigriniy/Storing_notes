@@ -4,7 +4,7 @@
     box-sizing: border-box;
 }
 
-boody {
+body {
     padding: 20px;
     background: #f0f0f0;
 }
@@ -30,7 +30,6 @@ h1 {
     background: #f0f0f0;
     padding: 15px;
     border-radius: 5px;
-
 }
 
 .add-btn {
@@ -43,13 +42,13 @@ h1 {
     cursor: pointer;
     margin-top: 15px;
     font-size: 14px;
- }
+}
 
 .add-btn:hover {
     background-color: #45a049;
 }
 
-.model {
+.modal {  /* Исправлено: было ".model" */
     display: none;
     position: fixed;
     top: 0;
@@ -61,13 +60,14 @@ h1 {
     align-items: center;
 }
 
-modal-content {
+.modal-content {
     background-color: white;
     padding: 20px;
     border-radius: 5px;
     width: 90%;
     max-width: 500px;
 }
+
 .modal-header {
     display: flex;
     justify-content: space-between;
@@ -85,8 +85,60 @@ modal-content {
     color: #f44336;
 }
 
-.modal-content input [type='text'] {
+.modal-content input[type='text'] {
     width: 100%;
     padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    margin-top: 5px;
+}
 
+.modal-body {
+    margin-bottom: 15px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-footer button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.modal-footer button:first-child {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.modal-footer button:last-child {
+    background-color: #f44336;
+    color: white;
+}
+
+
+
+.cards {
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border-left: 4px solid #4CAF50;
+}
+
+.card h3 {
+    margin-bottom: 10px;
+    color: #333;
 }
