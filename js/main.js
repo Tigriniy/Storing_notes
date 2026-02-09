@@ -44,6 +44,22 @@ const app = new Vue({
             localStorage.setItem('notesApp', JSON.stringify(data));
         },
         openAddModal(column) {
+            if (column === 'column1') {
+                if (this.isColumn1Locked) {
+                    alert('Столбец 1 заблокирован! Дождитесь освобождения места в столбце 2.');
+                    return;
+                }
+                if (this.column1.length >= 3) {
+                    alert('Первый столбец заполнен (максимум 3 карточки)');
+                    return;
+                }
+            }
+
+            if (column === 'column2' && this.column2.length >= 5) {
+                alert('Второй столбец заполнен (максимум 5 карточек)');
+                return;
+            }
+
             this.currentColumn = column;
             this.newCard = {
                 title: '',
@@ -66,7 +82,6 @@ const app = new Vue({
             }
         },
         saveCard() {
-
             if (!this.newCard.title.trim()) {
                 alert('Введите заголовок');
                 return;
@@ -111,14 +126,13 @@ const app = new Vue({
             const completed = card.items.filter(item => item.completed).length;
             const percentage = (completed / total) * 100;
 
-
             if (this.column1.includes(card) && percentage > 50) {
-
                 if (this.column2.length < 5) {
                     this.moveCard(card, 'column1', 'column2');
                 }
             }
 
+            // Если карточка в столбце 2 и выполнено 100%
             if (this.column2.includes(card) && percentage === 100) {
                 card.completedAt = new Date();
                 this.moveCard(card, 'column2', 'column3');
@@ -147,7 +161,6 @@ const app = new Vue({
             <h1>Система заметок</h1>
             
             <div class="columns">
-
                 <div class="column" :class="{ locked: isColumn1Locked }">
                     <h2>Столбец 1 (макс. 3)</h2>
                     <div class="cards">
