@@ -14,9 +14,7 @@ const app = new Vue({
     },
     computed: {
         isColumn1Locked() {
-            // Столбец 1 блокируется если:
-            // 1. В столбце 2 уже есть 5 карточек (максимум)
-            // И 2. В столбце 1 есть хотя бы одна карточка с прогрессом > 50%
+
             if (this.column2.length >= 5) {
                 return this.column1.some(card => {
                     const completed = card.items.filter(item => item.completed).length;
@@ -45,13 +43,11 @@ const app = new Vue({
             localStorage.setItem('notesApp', JSON.stringify(data));
         },
         openAddModal() {
-            // Проверка блокировки
             if (this.isColumn1Locked) {
                 alert('Столбец 1 заблокирован! Дождитесь освобождения места в столбце 2.');
                 return;
             }
 
-            // Проверка лимита
             if (this.column1.length >= 3) {
                 alert('Первый столбец заполнен (максимум 3 карточки)');
                 return;
@@ -77,32 +73,27 @@ const app = new Vue({
             }
         },
         saveCard() {
-            // Валидация заголовка
             if (!this.newCard.title.trim()) {
                 alert('Введите заголовок');
                 return;
             }
 
-            // Валидация пунктов
             const validItems = this.newCard.items.filter(item => item.trim());
             if (validItems.length < 3) {
                 alert('Должно быть минимум 3 пункта');
                 return;
             }
 
-            // Проверка лимита первого столбца
             if (this.column1.length >= 3) {
                 alert('Первый столбец заполнен (максимум 3 карточки)');
                 return;
             }
 
-            // Проверка блокировки
             if (this.isColumn1Locked) {
                 alert('Столбец 1 заблокирован! Дождитесь освобождения места в столбце 2.');
                 return;
             }
 
-            // Создание карточки
             const card = {
                 id: Date.now(),
                 title: this.newCard.title.trim(),
@@ -126,15 +117,12 @@ const app = new Vue({
             const completed = card.items.filter(item => item.completed).length;
             const percentage = (completed / total) * 100;
 
-            // Если карточка в столбце 1 и выполнено > 50%
             if (this.column1.includes(card) && percentage > 50) {
-                // Проверяем, есть ли место в столбце 2
                 if (this.column2.length < 5) {
                     this.moveCard(card, 'column1', 'column2');
                 }
             }
 
-            // Если карточка в столбце 2 и выполнено 100%
             if (this.column2.includes(card) && percentage === 100) {
                 card.completedAt = new Date();
                 this.moveCard(card, 'column2', 'column3');
@@ -163,7 +151,6 @@ const app = new Vue({
             <h1>Система заметок</h1>
             
             <div class="columns">
-                <!-- Столбец 1 - максимум 3 карточки, ТОЛЬКО СЮДА МОЖНО ДОБАВЛЯТЬ -->
                 <div class="column" :class="{ locked: isColumn1Locked }">
                     <h2>Столбец 1 (макс. 3)</h2>
                     <div class="cards">
@@ -185,7 +172,6 @@ const app = new Vue({
                             </div>
                         </div>
                     </div>
-                    <!-- Кнопка добавления ТОЛЬКО в первом столбце -->
                     <button @click="openAddModal" 
                             :disabled="column1.length >= 3 || isColumn1Locked">
                         Добавить карточку
@@ -195,7 +181,6 @@ const app = new Vue({
                     </div>
                 </div>
                 
-                <!-- Столбец 2 - максимум 5 карточек, добавлять нельзя, только автоматическое перемещение -->
                 <div class="column">
                     <h2>Столбец 2 (макс. 5)</h2>
                     <div class="cards">
@@ -217,10 +202,8 @@ const app = new Vue({
                             </div>
                         </div>
                     </div>
-                    <!-- НЕТ кнопки добавления в столбец 2 -->
                 </div>
                 
-                <!-- Столбец 3 - завершенные карточки -->
                 <div class="column">
                     <h2>Столбец 3 (завершенные)</h2>
                     <div class="cards">
@@ -239,7 +222,6 @@ const app = new Vue({
                 </div>
             </div>
             
-            <!-- Модальное окно -->
             <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
                 <div class="modal">
                     <div class="modal-header">
