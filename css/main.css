@@ -31,7 +31,6 @@ h1 {
     background: white;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .column.locked {
@@ -130,7 +129,6 @@ button:disabled {
     border-radius: 4px;
 }
 
-/* Модальное окно */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -222,14 +220,4 @@ button:disabled {
 
 .cancel {
     background: #777;
-}
-
-@media (max-width: 768px) {
-    .columns {
-        flex-direction: column;
-    }
-
-    .column {
-        width: 100%;
-    }
 }
