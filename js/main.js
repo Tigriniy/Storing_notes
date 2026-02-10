@@ -226,7 +226,9 @@ const app = new Vue({
                 <div class="modal">
                     <div class="modal-header">
                         <h3>Новая карточка (добавляется в Столбец 1)</h3>
-                        <button @click="closeModal" class="close">×</button>
+                        <button @click="closeModal" class="close" aria-label="Закрыть">
+                            Закрыть
+                        </button>
                     </div>
                     <div class="modal-body">
                         <div>
@@ -238,7 +240,7 @@ const app = new Vue({
                             <div v-for="(item, index) in newCard.items" :key="index" class="item-input">
                                 <input v-model="newCard.items[index]" :placeholder="'Пункт ' + (index + 1)">
                                 <button @click="removeItem(index)" 
-                                        :disabled="newCard.items.length <= 3">×</button>
+                                        :disabled="newCard.items.length <= 3">-</button>
                             </div>
                             <button @click="addItem" 
                                     :disabled="newCard.items.length >= 5">+ Добавить пункт</button>
