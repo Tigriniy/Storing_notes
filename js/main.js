@@ -1,257 +1,307 @@
-const app = new Vue({
-    el: '#app',
+let eventBus = new Vue()
+
+Vue.component('note-card', {
+    props: ['card', 'columntype', 'iscompleted'],
+    template: `
+        <div class="card" :class="{ completed: iscompleted }">
+            <h3>{{ card.title }}</h3>
+            
+            <ul class="items">
+                <li v-for="(item, index) in card.items" :key="index">
+                    <label>
+                        <input 
+                            type="checkbox" 
+                            :checked="item.completed"
+                            :disabled="iscompleted"
+                            @change="$emit('toggle', {cardId: card.id, columntype, index})"
+                        >
+                        <span :class="{ completed: item.completed }">
+                            {{ item.text }}
+                        </span>
+                    </label>
+                </li>
+            </ul>
+            
+            <div class="progress">
+                Выполнено: {{ doneCount }}/{{ card.items.length }}
+                ({{ Math.round((doneCount / card.items.length) * 100) }}%)
+            </div>
+            
+            <div v-if="card.completedAt" class="date">
+                Завершено: {{ new Date(card.completedAt).toLocaleString('ru-RU') }}
+            </div>
+        </div>
+    `,
+    computed: {
+        doneCount() {
+            return this.card.items.filter(item => item.completed).length
+        }
+    }
+})
+
+Vue.component('note-column', {
+    props: ['cards', 'title', 'columntype', 'maxcards', 'islocked', 'iscompleted'],
+    template: `
+        <div class="column" :class="{ locked: islocked }">
+            <h2>{{ title }}</h2>
+            
+            <div class="cards">
+                <note-card
+                    v-for="card in cards"
+                    :key="card.id"
+                    :card="card"
+                    :columntype="columntype"
+                    :iscompleted="iscompleted"
+                    @toggle="$emit('toggle', $event)"
+                />
+            </div>
+            
+            <button 
+                v-if="columntype === 'column1'"
+                @click="$emit('add')"
+                :disabled="cards.length >= maxcards || islocked"
+                class="add-btn"
+            >
+                Добавить карточку
+            </button>
+            
+            <div v-if="islocked" class="lock-msg">
+                Столбец заблокирован!
+            </div>
+        </div>
+    `
+})
+
+Vue.component('add-modal', {
+    template: `
+        <div class="modal-overlay" @click.self="$emit('close')">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>Новая карточка</h3>
+                    <button @click="$emit('close')" class="close">Закрыть</button>
+                </div>
+                
+                <div class="modal-body">
+                    <div>
+                        <label>Заголовок:</label>
+                        <input type="text" v-model="title" placeholder="Введите заголовок">
+                    </div>
+                    
+                    <div>
+                        <label>Пункты (3-5):</label>
+                        <div v-for="(item, index) in items" :key="index" class="item-input">
+                            <input type="text" v-model="items[index]" :placeholder="'Пункт ' + (index + 1)">
+                            <button @click="removeItem(index)" :disabled="items.length <= 3">-</button>
+                        </div>
+                        
+                        <button @click="addItem" :disabled="items.length >= 5">+ Добавить пункт</button>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button @click="save" class="save">Сохранить</button>
+                    <button @click="$emit('close')" class="cancel">Отмена</button>
+                </div>
+            </div>
+        </div>
+    `,
     data() {
         return {
-            column1: [],
-            column2: [],
-            column3: [],
-            showModal: false,
-            newCard: {
-                title: '',
-                items: ['', '', '']
-            }
+            title: '',
+            items: ['', '', '']
         }
+    },
+    methods: {
+        addItem() {
+            if (this.items.length < 5) this.items.push('')
+        },
+        removeItem(index) {
+            if (this.items.length > 3) this.items.splice(index, 1)
+        },
+        save() {
+            if (!this.title.trim()) {
+                alert('Введите заголовок')
+                return
+            }
+
+            const validItems = this.items.filter(item => item.trim())
+            if (validItems.length < 3) {
+                alert('Должно быть минимум 3 пункта')
+                return
+            }
+
+            eventBus.$emit('save-card', {
+                title: this.title,
+                items: this.items
+            })
+
+            this.title = ''
+            this.items = ['', '', '']
+            this.$emit('close')
+        }
+    }
+})
+
+const app = new Vue({
+    el: '#app',
+    data: {
+        column1: [],
+        column2: [],
+        column3: [],
+        showModal: false
     },
     computed: {
         isColumn1Locked() {
-
             if (this.column2.length >= 5) {
                 return this.column1.some(card => {
-                    const completed = card.items.filter(item => item.completed).length;
-                    return completed / card.items.length > 0.5;
-                });
+                    const done = card.items.filter(item => item.completed).length
+                    return done / card.items.length > 0.5
+                })
             }
-            return false;
+            return false
         }
     },
     methods: {
         loadCards() {
-            const saved = localStorage.getItem('notesApp');
+            const saved = localStorage.getItem('notesApp')
             if (saved) {
-                const data = JSON.parse(saved);
-                this.column1 = data.column1 || [];
-                this.column2 = data.column2 || [];
-                this.column3 = data.column3 || [];
+                try {
+                    const data = JSON.parse(saved)
+                    this.column1 = Array.isArray(data.column1) ? data.column1 : []
+                    this.column2 = Array.isArray(data.column2) ? data.column2 : []
+                    this.column3 = Array.isArray(data.column3) ? data.column3 : []
+                } catch {
+                    this.column1 = []
+                    this.column2 = []
+                    this.column3 = []
+                }
             }
         },
+
         saveCards() {
             const data = {
                 column1: this.column1,
                 column2: this.column2,
                 column3: this.column3
-            };
-            localStorage.setItem('notesApp', JSON.stringify(data));
+            }
+            localStorage.setItem('notesApp', JSON.stringify(data))
         },
+
         openAddModal() {
             if (this.isColumn1Locked) {
-                alert('Столбец 1 заблокирован! Дождитесь освобождения места в столбце 2.');
-                return;
+                alert('Столбец 1 заблокирован!')
+                return
             }
-
             if (this.column1.length >= 3) {
-                alert('Первый столбец заполнен (максимум 3 карточки)');
-                return;
+                alert('Первый столбец заполнен')
+                return
             }
-
-            this.showModal = true;
-            this.newCard = {
-                title: '',
-                items: ['', '', '']
-            };
+            this.showModal = true
         },
+
         closeModal() {
-            this.showModal = false;
+            this.showModal = false
         },
-        addItem() {
-            if (this.newCard.items.length < 5) {
-                this.newCard.items.push('');
-            }
-        },
-        removeItem(index) {
-            if (this.newCard.items.length > 3) {
-                this.newCard.items.splice(index, 1);
-            }
-        },
-        saveCard() {
-            if (!this.newCard.title.trim()) {
-                alert('Введите заголовок');
-                return;
-            }
 
-            const validItems = this.newCard.items.filter(item => item.trim());
-            if (validItems.length < 3) {
-                alert('Должно быть минимум 3 пункта');
-                return;
-            }
-
-            if (this.column1.length >= 3) {
-                alert('Первый столбец заполнен (максимум 3 карточки)');
-                return;
-            }
-
-            if (this.isColumn1Locked) {
-                alert('Столбец 1 заблокирован! Дождитесь освобождения места в столбце 2.');
-                return;
-            }
-
+        saveNewCard(cardData) {
             const card = {
                 id: Date.now(),
-                title: this.newCard.title.trim(),
-                items: validItems.map(text => ({
-                    text: text.trim(),
-                    completed: false
-                })),
+                title: cardData.title.trim(),
+                items: cardData.items
+                    .filter(item => item.trim())
+                    .map(text => ({
+                        text: text.trim(),
+                        completed: false
+                    })),
                 completedAt: null
-            };
+            }
 
-            this.column1.push(card);
-            this.saveCards();
-            this.closeModal();
+            this.column1.push(card)
+            this.saveCards()
         },
-        toggleItem(card, index) {
-            card.items[index].completed = !card.items[index].completed;
-            this.checkCardProgress(card);
-        },
-        checkCardProgress(card) {
-            const total = card.items.length;
-            const completed = card.items.filter(item => item.completed).length;
-            const percentage = (completed / total) * 100;
 
-            if (this.column1.includes(card) && percentage > 50) {
+        toggleItem(event) {
+            const { cardId, columntype, index } = event
+
+            const column = this[columntype]
+            const card = column.find(c => c.id === cardId)
+
+            if (card && card.items[index]) {
+                card.items[index].completed = !card.items[index].completed
+
+                this.checkProgress(card, columntype)
+                this.saveCards()
+            }
+        },
+
+        checkProgress(card, fromColumn) {
+            const total = card.items.length
+            const done = card.items.filter(item => item.completed).length
+            const percent = (done / total) * 100
+
+            if (fromColumn === 'column1' && percent >= 50) {
                 if (this.column2.length < 5) {
-                    this.moveCard(card, 'column1', 'column2');
+                    this.moveCard(card, 'column1', 'column2')
                 }
             }
 
-            if (this.column2.includes(card) && percentage === 100) {
-                card.completedAt = new Date();
-                this.moveCard(card, 'column2', 'column3');
+            if (fromColumn === 'column2' && percent === 100) {
+                card.completedAt = new Date()
+                this.moveCard(card, 'column2', 'column3')
             }
+        },
 
-            this.saveCards();
-        },
         moveCard(card, from, to) {
-            const index = this[from].findIndex(c => c.id === card.id);
-            if (index !== -1) {
-                const [movedCard] = this[from].splice(index, 1);
-                this[to].push(movedCard);
+            const fromIndex = this[from].findIndex(c => c.id === card.id)
+            if (fromIndex > -1) {
+                const moved = this[from].splice(fromIndex, 1)[0]
+                this[to].push(moved)
             }
-        },
-        formatDate(date) {
-            if (!date) return '';
-            const d = new Date(date);
-            return d.toLocaleString('ru-RU');
         }
     },
+
     mounted() {
-        this.loadCards();
+        this.loadCards()
+
+        // Слушаем сохранение карточки
+        eventBus.$on('save-card', this.saveNewCard)
     },
+
     template: `
         <div class="app">
             <h1>Система заметок</h1>
             
             <div class="columns">
-                <div class="column" :class="{ locked: isColumn1Locked }">
-                    <h2>Столбец 1 (макс. 3)</h2>
-                    <div class="cards">
-                        <div v-for="card in column1" :key="card.id" class="card">
-                            <h3>{{ card.title }}</h3>
-                            <ul class="items">
-                                <li v-for="(item, index) in card.items" :key="index">
-                                    <label>
-                                        <input type="checkbox" 
-                                               :checked="item.completed"
-                                               @change="toggleItem(card, index)">
-                                        <span :class="{ completed: item.completed }">{{ item.text }}</span>
-                                    </label>
-                                </li>
-                            </ul>
-                            <div class="progress">
-                                Выполнено: {{ card.items.filter(i => i.completed).length }}/{{ card.items.length }}
-                                ({{ Math.round((card.items.filter(i => i.completed).length / card.items.length) * 100) }}%)
-                            </div>
-                        </div>
-                    </div>
-                    <button @click="openAddModal" 
-                            :disabled="column1.length >= 3 || isColumn1Locked">
-                        Добавить карточку
-                    </button>
-                    <div v-if="isColumn1Locked" class="lock-msg">
-                        Столбец заблокирован! В столбце 2 максимальное количество карточек.
-                    </div>
-                </div>
+                <note-column
+                    :cards="column1"
+                    title="Столбец 1 (макс. 3)"
+                    columntype="column1"
+                    :maxcards="3"
+                    :islocked="isColumn1Locked"
+                    @add="openAddModal"
+                    @toggle="toggleItem"
+                />
+
+                <note-column
+                    :cards="column2"
+                    title="Столбец 2 (макс. 5)"
+                    columntype="column2"
+                    :maxcards="5"
+                    @toggle="toggleItem"
+                />
                 
-                <div class="column">
-                    <h2>Столбец 2 (макс. 5)</h2>
-                    <div class="cards">
-                        <div v-for="card in column2" :key="card.id" class="card">
-                            <h3>{{ card.title }}</h3>
-                            <ul class="items">
-                                <li v-for="(item, index) in card.items" :key="index">
-                                    <label>
-                                        <input type="checkbox" 
-                                               :checked="item.completed"
-                                               @change="toggleItem(card, index)">
-                                        <span :class="{ completed: item.completed }">{{ item.text }}</span>
-                                    </label>
-                                </li>
-                            </ul>
-                            <div class="progress">
-                                Выполнено: {{ card.items.filter(i => i.completed).length }}/{{ card.items.length }}
-                                ({{ Math.round((card.items.filter(i => i.completed).length / card.items.length) * 100) }}%)
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="column">
-                    <h2>Столбец 3 (завершенные)</h2>
-                    <div class="cards">
-                        <div v-for="card in column3" :key="card.id" class="card completed">
-                            <h3>{{ card.title }}</h3>
-                            <ul class="items">
-                                <li v-for="(item, index) in card.items" :key="index" class="completed">
-                                    <input type="checkbox" checked disabled>
-                                    <span>{{ item.text }}</span>
-                                </li>
-                            </ul>
-                            <div class="progress">Выполнено: 100%</div>
-                            <div class="date">Завершено: {{ formatDate(card.completedAt) }}</div>
-                        </div>
-                    </div>
-                </div>
+                <note-column
+                    :cards="column3"
+                    title="Столбец 3 (завершенные)"
+                    columntype="column3"
+                    :iscompleted="true"
+                />
             </div>
             
-            <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-                <div class="modal">
-                    <div class="modal-header">
-                        <h3>Новая карточка (добавляется в Столбец 1)</h3>
-                        <button @click="closeModal" class="close" aria-label="Закрыть">
-                            Закрыть
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div>
-                            <label>Заголовок:</label>
-                            <input v-model="newCard.title" placeholder="Введите заголовок">
-                        </div>
-                        <div>
-                            <label>Пункты (3-5):</label>
-                            <div v-for="(item, index) in newCard.items" :key="index" class="item-input">
-                                <input v-model="newCard.items[index]" :placeholder="'Пункт ' + (index + 1)">
-                                <button @click="removeItem(index)" 
-                                        :disabled="newCard.items.length <= 3">-</button>
-                            </div>
-                            <button @click="addItem" 
-                                    :disabled="newCard.items.length >= 5">+ Добавить пункт</button>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button @click="saveCard" class="save">Сохранить в Столбец 1</button>
-                        <button @click="closeModal" class="cancel">Отмена</button>
-                    </div>
-                </div>
-            </div>
+            <add-modal
+                v-if="showModal"
+                @close="closeModal"
+            />
         </div>
     `
-});
+})
