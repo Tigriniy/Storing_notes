@@ -155,7 +155,7 @@ const app = new Vue({
             if (this.column2.length >= 5) {
                 return this.column1.some(card => {
                     const done = card.items.filter(item => item.completed).length
-                    return done / card.items.length > 0.5
+                    return done / card.items.length >= 0.5
                 })
             }
             return false
@@ -263,7 +263,6 @@ const app = new Vue({
     mounted() {
         this.loadCards()
 
-        // Слушаем сохранение карточки
         eventBus.$on('save-card', this.saveNewCard)
     },
 

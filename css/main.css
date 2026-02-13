@@ -35,7 +35,6 @@ h1 {
 
 .column.locked {
     background: #ffebee;
-    border: 2px solid #f44336;
 }
 
 .column h2 {
@@ -59,7 +58,6 @@ h1 {
 
 .card.completed {
     background: #e8f5e9;
-    border-color: #4caf50;
 }
 
 .card h3 {
